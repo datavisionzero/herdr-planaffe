@@ -53,3 +53,15 @@ test("active work excludes finished issues and prioritizes work underway", () =>
   assert.equal(filtered(rows, "", "done")[0].status, "done");
   assert.equal(filtered(rows, "no match", "active").length, 0);
 });
+
+test("all-clear requires complete successful data and ignores search filters", async () => {
+  const { workOverview } = await import("../mods/planaffe/core.js");
+  const state = { current: true, loading: false, error: null, cursor: null };
+  const done = demoIssues.filter(row => row.status === "done");
+  assert.equal(workOverview(done, state).complete, true);
+  assert.equal(workOverview(demoIssues, state).complete, false);
+  for (const patch of [{ current: false }, { loading: true }, { error: "failed" }, { cursor: "next" }]) {
+    assert.equal(workOverview(done, { ...state, ...patch }).complete, false);
+  }
+  assert.equal(workOverview(demoIssues, { ...state, cursor: "next" }).text, "◉ 2+ open");
+});

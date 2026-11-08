@@ -6,7 +6,7 @@ const source = await readFile(new URL("../mods/planaffe/main.js", import.meta.ur
 const replaced = source
   .replace('import { View, div } from "gpui-kit";', 'const {View, div} = globalThis.__planaffeHarness;')
   .replace('import { v_flex, h_flex, InputState, Input } from "gpui-base";', 'const {v_flex, h_flex, InputState, Input} = globalThis.__planaffeHarness;')
-  .replace('import { spaces, panes, focused, exec, readTextFile, appHome, theme, props as hostProps } from "herdr";', 'const {spaces, panes, focused, exec, readTextFile, appHome, theme, hostProps} = globalThis.__planaffeHarness;')
+  .replace('import { spaces, panes, focused, exec, readTextFile, appHome, theme, settings, props as hostProps } from "herdr";', 'const {spaces, panes, focused, exec, readTextFile, appHome, theme, settings, hostProps} = globalThis.__planaffeHarness;')
   .replace('"./core.js"', JSON.stringify(new URL("../mods/planaffe/core.js", import.meta.url).href))
   .replace('"./client.js"', JSON.stringify(new URL("../mods/planaffe/client.js", import.meta.url).href));
 const row = (project, number = 1) => ({ key: `${project}-${number}`, project, title: "Issue", status: "todo", assignee: null, claim: null, labels: [] });
@@ -25,7 +25,7 @@ test("controller isolates repository and detail races, retries, timeout and remo
     focused: () => ({ pane: modFocused ? "mod" : "terminal", tab: "tab", cwd: null }),
     exec: async (_command, _args, options) => ({ code: 0, stdout: options.cwd, stderr: "" }),
     readTextFile: async path => path.endsWith(".planaffe") ? `project = ${path.includes("repo-a") ? "A" : "B"}` : '{"profiles":{"default":{"url":"https://example.test","token":"test-only"}}}',
-    appHome: () => "/local", theme: () => ({})
+    appHome: () => "/local", theme: () => ({}), settings: () => ({ dark: true })
   };
   try {
     const { default: Panel } = await import(`data:text/javascript;base64,${Buffer.from(replaced).toString("base64")}`);

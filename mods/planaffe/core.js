@@ -68,3 +68,13 @@ export const demoIssues = [
   { key: "PLAN-102", project: "PLAN", title: "Review issue details", status: "review", assignee: null, holder: null, labels: [], description: "Descriptions and results are Markdown, shown here as source text.", result: "The implementation is ready for human review." },
   { key: "PLAN-103", project: "PLAN", title: "Verify refresh and filters", status: "done", assignee: "maintainer", holder: null, labels: [], description: "Search the loaded issues by key, title, assignee or claim holder.", result: "Verified." }
 ];
+
+// Completion is independent of search and only known after the last page.
+export function workOverview(rows, { current, loading, error, cursor }) {
+  if (!current || loading) return { text: "Checking work…", complete: false };
+  if (error) return { text: "Work status unavailable", complete: false };
+  const count = filtered(rows, "", "active").length;
+  if (count) return { text: `◉ ${count}${cursor ? "+" : ""} open`, complete: false };
+  if (cursor) return { text: "More issues to check", complete: false };
+  return { text: "✓ All clear", complete: true };
+}

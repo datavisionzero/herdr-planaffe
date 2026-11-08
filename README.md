@@ -72,6 +72,7 @@ Repository files cannot choose an endpoint or token. Optional `folder` in pane p
 ## Behavior
 
 - Defaults to active work, hiding done and canceled issues. In-progress issues appear first, followed by review, todo and backlog. Colored status symbols and clickable overview counts summarize loaded repository issues. All statuses remain accessible through filters.
+- The compact header shows outstanding work, or a green check only after all pages have loaded successfully and no active issues remain. Search does not affect this indicator. Review is orange; error messages remain red.
 - Lists issue key, title, canonical status, assignee and current claim holder.
 - Loads 100 project issues per page. **Load more** follows the opaque cursor; the counter distinguishes loaded project issues from visible matches.
 - Search and status filters apply to **loaded issues only**. Search matches key, title, assignee and claim holder. With a repository filter, an early page may contain no visible matches; load more to continue.

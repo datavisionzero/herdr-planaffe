@@ -1,7 +1,7 @@
 import { View, div } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { spaces, panes, focused, exec, readTextFile, appHome, theme, props as hostProps } from "herdr";
-import { mapping, profile, filtered, demoIssues, statuses, inRepository } from "./core.js";
+import { spaces, panes, focused, exec, readTextFile, appHome, theme, settings, props as hostProps } from "herdr";
+import { mapping, profile, filtered, demoIssues, statuses, inRepository, workOverview } from "./core.js";
 import { Client } from "./client.js";
 
 export default class Planaffe extends View {
@@ -133,18 +133,19 @@ export default class Planaffe extends View {
     const t = theme(), current = this.context === this.key();
     const rows = current ? filtered(this.rows, this.query, this.status) : [];
     const symbols = { active: "◉", in_progress: "▶", review: "◇", todo: "○", backlog: "⋯", done: "✓", canceled: "×", all: "≡" };
-    const color = status => ["in_progress", "todo"].includes(status) ? t.accent : status === "review" ? t.blocked : t.muted;
+    const overview = workOverview(this.rows, { current, loading: this.loading, error: this.error, cursor: this.cursor });
+    const completeColor = settings().dark ? "#65c58a" : "#237744";
+    const color = status => ["in_progress", "todo"].includes(status) ? t.accent : status === "review" ? (settings().dark ? "#f0a340" : "#995300") : status === "done" ? completeColor : t.muted;
     const label = status => symbols[status] + " " + (status === "active" ? "Active work" : status.replaceAll("_", " "));
     const selected = rows.find(row => row.key === this.selection);
     const detail = selected && this.detail?.key === selected.key ? this.detail : null;
     const button = (id, label, action, active = false) => div().id(id).px(8).py(5).rounded(4).bg(active ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => action(cx)).child(label);
     return v_flex().id("planaffe-root").size_full().bg(t.surface).text_color(t.foreground).text_size(13).p(12).gap(10).children([
-      h_flex().items_center().justify_between().children([div().font_semibold().child("planaffe issues"), button("refresh", "Refresh", cx => this.refresh(cx))]),
-      div().text_color(t.muted).child(current ? this.project || "Repository mapping" : "Switching repository…"),
-      div().text_color(t.dim).text_size(11).child("WORK OVERVIEW · loaded repository issues"),
+      h_flex().items_center().justify_between().children([div().font_semibold().child(current ? this.project || "planaffe" : "planaffe"), button("refresh", "Refresh", cx => this.refresh(cx))]),
+      div().text_color(overview.complete ? completeColor : t.muted).font_semibold().child(overview.text),
       h_flex().gap(6).flex_wrap().children(["in_progress", "todo", "review"].map(status =>
         div().id("overview-" + status).p(10).rounded(5).bg(this.status === status ? t.selected : t.raised).text_color(color(status)).hover(s => s.bg(t.hover)).on_click((_e, cx) => { this.status = status; cx.notify(); }).child(label(status) + " · " + (current ? this.rows.filter(row => row.status === status).length : 0)))),
-      Input.new(this.input).h(32).bg(t.raised).text_color(t.foreground),
+      Input.new(this.input).h(36).px(10).py(7).rounded(5).bg(t.raised).text_color(t.foreground),
       h_flex().gap(4).flex_wrap().children(["active", ...statuses, "all"].map(status => button(`status-${status}`, label(status), cx => { this.status = status; cx.notify(); }, this.status === status))),
       div().text_color(t.muted).child(!current ? "Switching repository…" : this.loading ? "Loading…" : `${rows.length} shown · ${this.loaded} / ${this.total} project issues loaded`),
       ...(current && this.error ? [div().text_color(t.blocked).child(this.error)] : []),
