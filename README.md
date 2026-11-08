@@ -2,7 +2,7 @@
 
 A native [planaffe](https://github.com/datavisionzero/planaffe) issue panel for [Herdr](https://github.com/herdrdev/herdr-app). MIT licensed. No webview, npm dependencies, adapter service or build step.
 
-**Early integration:** tested against planaffe commit `8280064a515499f00594e706cfdc3c299b81ea00` and Herdr's installed gpui-shell 0.7.1 interfaces. See [VERIFICATION.md](VERIFICATION.md) for the checks and their limits. Compatibility with other versions is not yet guaranteed.
+**Early integration:** tested against planaffe commit `8280064a515499f00594e706cfdc3c299b81ea00` and Herdr 0.1.14 with its installed gpui-shell 0.7.1 interfaces. See [VERIFICATION.md](VERIFICATION.md) for the checks and their limits. Compatibility with other versions is not yet guaranteed.
 
 ## Set up with an AI agent
 

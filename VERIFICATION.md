@@ -1,7 +1,7 @@
 # Verification — 2026-11-08
 
 Compatibility target: planaffe commit
-`8280064a515499f00594e706cfdc3c299b81ea00`; installed Herdr gpui-shell 0.7.1
+`8280064a515499f00594e706cfdc3c299b81ea00`; Herdr 0.1.14, installed gpui-shell 0.7.1
 interfaces. Node v24.11.0, Windows.
 
 ## Completed
@@ -32,6 +32,22 @@ interfaces. Node v24.11.0, Windows.
   from Herdr's `props()`, not the View constructor's initialization argument.
 - Temporary test panel was closed and the disposable database container removed.
   No screenshots, credentials or generated runtime declarations are published.
+
+## Herdr 0.1.14 compatibility review
+
+Reviewed the [0.1.14 release notes](https://github.com/herdrdev/herdr-app/blob/master/CHANGELOG.md#0114---2026-11-08)
+for the shared module evaluation change. Both mods initialize host-dependent
+state, inputs, timers and async work inside their View instances; profiles,
+clients, filters, selections and answer drafts are not module globals.
+Demo rows now copy their nested labels and questions per instance too. The
+controller regression test creates two copies from one module and verifies
+that mutations and refreshes do not leak between them or into the demo template.
+The exported status list remains shared read-only data.
+
+The new optional `exec` timeout does not require migration: both mods use short
+`git rev-parse` calls and retain the host's 30-second default. Neither mod uses
+pane swapping or relies on the old idle redraw frequency; background checks
+already use explicit per-instance timers. Native checks pass on 0.1.14.
 
 ## Limits
 

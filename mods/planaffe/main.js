@@ -55,7 +55,10 @@ export default class Planaffe extends View {
     cx.spawn(async cx => {
       try {
         if (this.demo) {
-          this.project = "PLAN · DEMO"; this.rows = demoIssues;
+          // Herdr shares module exports across copies; own all mutable demo data.
+          this.project = "PLAN · DEMO";
+          this.rows = demoIssues.map(row => ({ ...row, labels: [...row.labels],
+            questions: (row.questions || []).map(question => ({ ...question })) }));
           this.total = this.loaded = demoIssues.length;
         } else {
           if (loc.on) throw new Error("Only local repositories are supported. Remote space credentials are never used.");

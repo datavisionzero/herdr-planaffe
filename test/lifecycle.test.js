@@ -33,6 +33,27 @@ test("controller isolates repository and detail races, retries, timeout and remo
     const demo = new Panel(); demo.init({ demo: true }, cx); await Promise.all(tasks);
     assert.equal(demo.rows.length, 3);
     demo.select("PLAN-102", cx); assert.ok(demo.detail.result);
+    // Both instances use the same imported module, as in Herdr 0.1.14.
+    const secondDemo = new Panel(); secondDemo.init({}, cx); await Promise.all(tasks);
+    demo.select("PLAN-101", cx); secondDemo.select("PLAN-101", cx);
+    demo.detail.title = "Only the first panel";
+    demo.detail.labels.push("local-only");
+    demo.detail.questions[0].answer = "Only the first answer";
+    demo.epicFilter = "without";
+    demo.query = "first-panel-query";
+    assert.equal(secondDemo.detail.title, "Connect the project repository");
+    assert.deepEqual(secondDemo.detail.labels, []);
+    assert.equal(secondDemo.detail.questions[0].answer, null);
+    assert.equal(secondDemo.epicFilter, "all");
+    assert.equal(secondDemo.query, "");
+    assert.notEqual(demo.input, secondDemo.input);
+    assert.notEqual(demo.replyInputs, secondDemo.replyInputs);
+    assert.notEqual(demo.sending, secondDemo.sending);
+    demo.refresh(cx); await Promise.all(tasks);
+    assert.equal(demo.rows[0].title, "Connect the project repository");
+    assert.deepEqual(demo.rows[0].labels, []);
+    assert.equal(demo.rows[0].questions[0].answer, null);
+    assert.equal(secondDemo.selection, "PLAN-101");
     tasks = []; props = {};
     const panel = new Panel(); panel.init({}, cx); await tick();
     const old = pending.shift(); assert.match(old.url, /project=A/);
