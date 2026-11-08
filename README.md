@@ -4,6 +4,16 @@ A native, read-only [planaffe](https://github.com/datavisionzero/planaffe) issue
 
 **Early integration:** tested against planaffe commit `8280064a515499f00594e706cfdc3c299b81ea00` and Herdr's installed gpui-shell 0.7.1 interfaces. See [VERIFICATION.md](VERIFICATION.md) for the checks and their limits. Compatibility with other versions is not yet guaranteed.
 
+## Set up with an AI agent
+
+With Herdr installed and a planaffe instance available, an AI agent with local file and terminal access can handle the mod setup. Open the agent in the Git repository you want to connect, then copy these two sentences:
+
+```text
+Set up herdr-planaffe (https://github.com/datavisionzero/herdr-planaffe) for my current Git repository by following its README, validate the installed mod and open its panel in Herdr. Reuse and preserve existing configuration, ask me only for missing instance, project or optional repo label details, and help me enter the token locally in Herdr's planaffe.local.json outside Git.
+```
+
+The agent can install the mod, configure the repository mapping and local profile, and check the result. Enter your token directly in the local file rather than pasting it into the chat. For manual setup, follow the steps below.
+
 ## Install
 
 1. Copy `mods/planaffe` into Herdr's `mods` directory: `$HERDR_APP_HOME/mods/planaffe`, or `~/.config/herdr-app/mods/planaffe` by default.
