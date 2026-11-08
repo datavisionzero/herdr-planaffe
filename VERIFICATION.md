@@ -20,6 +20,10 @@ interfaces. Node v24.11.0, Windows.
 - Actual Herdr window: demo list, claim display, issue selection, description,
   result, status filter, search and combined filters visually checked. Missing
   local configuration displays an actionable error. No native errors reported.
+- Detail layout follow-up: opened a long issue in a configured live panel,
+  scrolled through its description to the end of its result, and returned to
+  the same list filter with the close action. Details use the available panel
+  height and their action header stays visible while scrolling.
 - Fixed a host integration defect found during that check: pane options come
   from Herdr's `props()`, not the View constructor's initialization argument.
 - Temporary test panel was closed and the disposable database container removed.
@@ -28,8 +32,8 @@ interfaces. Node v24.11.0, Windows.
 ## Limits
 
 The live server check exercises the production client module through Node's HTTP
-transport. Native Herdr fetch against a configured live instance has not been
-interactively checked. Native scrolling with large datasets, remote repositories
+transport. Native Herdr fetch for the list and long issue details has also been
+interactively checked. List scrolling with large datasets, remote repositories
 (unsupported), other Herdr versions and other planaffe revisions are not covered.
 Markdown is displayed as source text. Search/status filters cover loaded pages,
 not the entire server result set.

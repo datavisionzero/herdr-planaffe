@@ -187,45 +187,51 @@ export default class Planaffe extends View {
     const button = (id, label, action, active = false) => div().id(id).px(8).py(5).rounded(4).bg(active ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => action(cx)).child(label);
     return v_flex().id("planaffe-root").size_full().bg(t.surface).text_color(t.foreground).text_size(13).p(12).gap(10).children([
       h_flex().items_center().justify_between().children([div().font_semibold().child(current ? this.project || "planaffe" : "planaffe"), button("refresh", "Refresh", cx => this.refresh(cx))]),
-      div().text_color(overview.complete ? completeColor : t.muted).font_semibold().child(overview.text),
-      h_flex().gap(6).flex_wrap().children(["in_progress", "todo", "review"].map(status =>
-        div().id("overview-" + status).p(10).rounded(5).bg(this.status === status ? t.selected : t.raised).text_color(color(status)).hover(s => s.bg(t.hover)).on_click((_e, cx) => { this.status = status; cx.notify(); }).child(label(status) + " · " + (current ? this.rows.filter(row => row.status === status).length : 0)))),
-      Input.new(this.input).h(36).px(10).py(7).rounded(5).bg(t.raised).text_color(t.foreground),
-      h_flex().gap(4).flex_wrap().children(["active", "questions", ...statuses, "all"].map(status => button(`status-${status}`, label(status), cx => { this.status = status; cx.notify(); }, this.status === status))),
-      div().text_color(t.muted).child(!current ? "Switching repository…" : this.loading ? "Loading…" : `${rows.length} shown · ${this.loaded} / ${this.total} project issues loaded`),
-      ...(current && this.error ? [div().text_color(t.blocked).child(this.error)] : []),
-      ...(!rows.length && current && !this.loading && !this.error ? [div().text_color(t.muted).child(this.cursor ? "No matches loaded. Load more to find further issues." : "No matching issues. Choose another filter or clear search.")] : []),
-      v_flex().id("issue-scroll").flex_1().min_h(0).overflow_y_scrollbar().gap(6).children(rows.map(row =>
-        v_flex().id(`issue-${row.key}`).p(10).gap(4).rounded(5).bg(row.key === this.selection ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => this.select(row.key, cx)).children([
-          div().text_color(color(row.status)).text_size(11).child(`${label(row.status)} · ${row.key}`),
-          div().font_semibold().child(row.title),
-          ...(row.open_questions > 0 ? [div().text_color(color("review")).child(`? ${row.open_questions} awaiting answer`)] : []),
-          ...(row.holder ? [div().text_color(t.muted).child(`Claim: ${row.holder}`)] : [])
-        ]))),
-      ...(current && this.cursor ? [button("more", this.loading ? "Loading…" : "Load more", cx => this.more(cx))] : []),
-      ...(selected ? [v_flex().id("details").max_h(250).overflow_y_scrollbar().p(10).gap(6).bg(t.raised).rounded(5).children([
-        h_flex().items_center().justify_between().gap(8).children([
+      ...(!selected ? [
+        div().text_color(overview.complete ? completeColor : t.muted).font_semibold().child(overview.text),
+        h_flex().gap(6).flex_wrap().children(["in_progress", "todo", "review"].map(status =>
+          div().id("overview-" + status).p(10).rounded(5).bg(this.status === status ? t.selected : t.raised).text_color(color(status)).hover(s => s.bg(t.hover)).on_click((_e, cx) => { this.status = status; cx.notify(); }).child(label(status) + " · " + (current ? this.rows.filter(row => row.status === status).length : 0)))),
+        Input.new(this.input).h(36).px(10).py(7).rounded(5).bg(t.raised).text_color(t.foreground),
+        h_flex().gap(4).flex_wrap().children(["active", "questions", ...statuses, "all"].map(status => button(`status-${status}`, label(status), cx => { this.status = status; cx.notify(); }, this.status === status))),
+        div().text_color(t.muted).child(!current ? "Switching repository…" : this.loading ? "Loading…" : `${rows.length} shown · ${this.loaded} / ${this.total} project issues loaded`),
+        ...(current && this.error ? [div().text_color(t.blocked).child(this.error)] : []),
+        ...(!rows.length && current && !this.loading && !this.error ? [div().text_color(t.muted).child(this.cursor ? "No matches loaded. Load more to find further issues." : "No matching issues. Choose another filter or clear search.")] : []),
+        v_flex().id("issue-scroll").flex_1().min_h(0).overflow_y_scrollbar().gap(6).children(rows.map(row =>
+          v_flex().id(`issue-${row.key}`).p(10).gap(4).rounded(5).bg(row.key === this.selection ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => this.select(row.key, cx)).children([
+            div().text_color(color(row.status)).text_size(11).child(`${label(row.status)} · ${row.key}`),
+            div().font_semibold().child(row.title),
+            ...(row.open_questions > 0 ? [div().text_color(color("review")).child(`? ${row.open_questions} awaiting answer`)] : []),
+            ...(row.holder ? [div().text_color(t.muted).child(`Claim: ${row.holder}`)] : [])
+          ]))),
+        ...(current && this.cursor ? [button("more", this.loading ? "Loading…" : "Load more", cx => this.more(cx))] : []),
+      ] : []),
+      ...(selected ? [v_flex().id("details").flex_1().min_h(0).p(10).gap(6).bg(t.raised).rounded(5).children([
+        h_flex().flex_shrink_0().items_center().justify_between().gap(8).children([
           div().font_semibold().child(selected.key),
           h_flex().items_center().gap(6).children([
             ...(!this.demo && this.client ? [button("open-issue-web", "↗ Open in planaffe", cx => this.openIssue(cx))] : []),
             button("close-details", "×", cx => this.closeDetails(cx))
           ])
         ]),
-        div().font_semibold().child(selected.title),
-        ...(selected.assignee ? [div().text_color(t.muted).child(`Assigned to: ${selected.assignee}`)] : []),
-        ...(this.detailError ? [div().text_color(t.blocked).child(this.detailError)] : []),
-        ...(this.answerError ? [div().text_color(t.blocked).child(this.answerError)] : []),
-        ...(detail?.questions || []).map(q => {
-          return v_flex().gap(6).p(8).bg(t.surface).rounded(4).children([
-            div().text_color(color("review")).child("? " + q.question),
-            ...(q.answer !== null ? [div().child("Answer: " + q.answer)] : [
-              Input.new(this.replyInputs[q.id]).h(36).px(10).py(7).bg(t.raised),
-              button("answer-" + q.id, this.demo ? "Demo · sending disabled" : this.sending.has(q.id) ? "Sending…" : "Send answer", cx => this.sendAnswer(q.id, cx))
-            ])
-          ]);
-        }),
-        div().child(this.detailLoading ? "Loading description…" : detail?.description || "No description"),
-        ...(detail?.result ? [div().font_semibold().child("Result"), div().child(detail.result)] : [])
+        // Keep content at its natural height so the bounded viewport can scroll.
+        v_flex().id(`detail-scroll-${selected.key}`).flex_1().min_h(0).overflow_y_scrollbar().child(
+          v_flex().flex_shrink_0().gap(6).children([
+            div().font_semibold().child(selected.title),
+            ...(selected.assignee ? [div().text_color(t.muted).child(`Assigned to: ${selected.assignee}`)] : []),
+            ...(this.detailError ? [div().text_color(t.blocked).child(this.detailError)] : []),
+            ...(this.answerError ? [div().text_color(t.blocked).child(this.answerError)] : []),
+            ...(detail?.questions || []).map(q => {
+              return v_flex().gap(6).p(8).bg(t.surface).rounded(4).children([
+                div().text_color(color("review")).child("? " + q.question),
+                ...(q.answer !== null ? [div().child("Answer: " + q.answer)] : [
+                  Input.new(this.replyInputs[q.id]).h(36).px(10).py(7).bg(t.raised),
+                  button("answer-" + q.id, this.demo ? "Demo · sending disabled" : this.sending.has(q.id) ? "Sending…" : "Send answer", cx => this.sendAnswer(q.id, cx))
+                ])
+              ]);
+            }),
+            div().child(this.detailLoading ? "Loading description…" : detail?.description || "No description"),
+            ...(detail?.result ? [div().font_semibold().child("Result"), div().child(detail.result)] : [])
+          ]))
       ])] : [div().text_color(t.dim).child("Select an issue to load its description.")])
     ]);
   }
