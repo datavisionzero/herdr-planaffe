@@ -60,7 +60,7 @@ export function inRepository(row, repo, labels) {
 
 export function filtered(rows, query, status) {
   const q = query.toLowerCase().trim();
-  return rows.filter(row => (status === "all" || row.status === status) && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""}`.toLowerCase().includes(q));
+  return rows.filter(row => (status === "all" || (status === "active" ? !["done", "canceled"].includes(row.status) : row.status === status)) && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""}`.toLowerCase().includes(q)).sort((a, b) => ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(a.status) - ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(b.status));
 }
 
 export const demoIssues = [

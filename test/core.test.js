@@ -45,3 +45,11 @@ test("search combines with canonical status across loaded issues", () => {
   assert.equal(filtered(demoIssues, "build-agent", "in_progress").length, 1);
   assert.equal(filtered(demoIssues, "plan-103", "review").length, 0);
 });
+
+test("active work excludes finished issues and prioritizes work underway", () => {
+  const rows = ["done", "backlog", "todo", "canceled", "review", "in_progress"].map(status => ({ ...demoIssues[0], status }));
+  assert.deepEqual(filtered(rows, "", "active").map(row => row.status), ["in_progress", "review", "todo", "backlog"]);
+  assert.equal(filtered(rows, "", "all").length, 6);
+  assert.equal(filtered(rows, "", "done")[0].status, "done");
+  assert.equal(filtered(rows, "no match", "active").length, 0);
+});

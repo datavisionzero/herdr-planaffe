@@ -25,7 +25,7 @@ export default class Planaffe extends View {
     this.demo = props?.demo === true;
     this.folder = typeof props?.folder === "string" ? props.folder : null;
     this.profileName = typeof props?.profile === "string" ? props.profile : "default";
-    this.serial = 0; this.detailSerial = 0; this.rows = []; this.status = "all"; this.query = "";
+    this.serial = 0; this.detailSerial = 0; this.rows = []; this.status = "active"; this.query = "";
     this.input = InputState.new({ placeholder: "Search loaded issues" });
     this.input.on("change", (_event, cx) => { this.query = this.input.value(); cx.notify(); });
     this.refresh(cx);
@@ -132,19 +132,26 @@ export default class Planaffe extends View {
   render(cx) {
     const t = theme(), current = this.context === this.key();
     const rows = current ? filtered(this.rows, this.query, this.status) : [];
+    const symbols = { active: "◉", in_progress: "▶", review: "◇", todo: "○", backlog: "⋯", done: "✓", canceled: "×", all: "≡" };
+    const color = status => ["in_progress", "todo"].includes(status) ? t.accent : status === "review" ? t.blocked : t.muted;
+    const label = status => symbols[status] + " " + (status === "active" ? "Active work" : status.replaceAll("_", " "));
     const selected = rows.find(row => row.key === this.selection);
     const detail = selected && this.detail?.key === selected.key ? this.detail : null;
     const button = (id, label, action, active = false) => div().id(id).px(8).py(5).rounded(4).bg(active ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => action(cx)).child(label);
     return v_flex().id("planaffe-root").size_full().bg(t.surface).text_color(t.foreground).text_size(13).p(12).gap(10).children([
       h_flex().items_center().justify_between().children([div().font_semibold().child("planaffe issues"), button("refresh", "Refresh", cx => this.refresh(cx))]),
       div().text_color(t.muted).child(current ? this.project || "Repository mapping" : "Switching repository…"),
+      div().text_color(t.dim).text_size(11).child("WORK OVERVIEW · loaded repository issues"),
+      h_flex().gap(6).flex_wrap().children(["in_progress", "todo", "review"].map(status =>
+        div().id("overview-" + status).p(10).rounded(5).bg(this.status === status ? t.selected : t.raised).text_color(color(status)).hover(s => s.bg(t.hover)).on_click((_e, cx) => { this.status = status; cx.notify(); }).child(label(status) + " · " + (current ? this.rows.filter(row => row.status === status).length : 0)))),
       Input.new(this.input).h(32).bg(t.raised).text_color(t.foreground),
-      h_flex().gap(4).flex_wrap().children(["all", ...statuses].map(status => button(`status-${status}`, status.replaceAll("_", " "), cx => { this.status = status; cx.notify(); }, this.status === status))),
+      h_flex().gap(4).flex_wrap().children(["active", ...statuses, "all"].map(status => button(`status-${status}`, label(status), cx => { this.status = status; cx.notify(); }, this.status === status))),
       div().text_color(t.muted).child(!current ? "Switching repository…" : this.loading ? "Loading…" : `${rows.length} shown · ${this.loaded} / ${this.total} project issues loaded`),
       ...(current && this.error ? [div().text_color(t.blocked).child(this.error)] : []),
+      ...(!rows.length && current && !this.loading && !this.error ? [div().text_color(t.muted).child(this.cursor ? "No matches loaded. Load more to find further issues." : "No matching issues. Choose another filter or clear search.")] : []),
       v_flex().id("issue-scroll").flex_1().min_h(0).overflow_y_scrollbar().gap(6).children(rows.map(row =>
         v_flex().id(`issue-${row.key}`).p(10).gap(4).rounded(5).bg(row.key === this.selection ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => this.select(row.key, cx)).children([
-          div().text_color(t.muted).text_size(11).child(`${row.key} · ${row.status.replaceAll("_", " ")}`),
+          div().text_color(color(row.status)).text_size(11).child(`${label(row.status)} · ${row.key}`),
           div().font_semibold().child(row.title), div().text_color(t.dim).child(`Assignee: ${row.assignee || "Unassigned"}`),
           ...(row.holder ? [div().text_color(t.muted).child(`Claim: ${row.holder}`)] : [])
         ]))),
