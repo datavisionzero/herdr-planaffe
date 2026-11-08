@@ -52,6 +52,14 @@ test("controller isolates repository and detail races, retries, timeout and remo
     panel.more(cx); await tick();
     pending.shift().resolve(response({ items: [row("B", 2)], total: 2, has_more: false, next_cursor: null })); await tasks.at(-1);
     assert.equal(panel.rows.length, 2); assert.equal(panel.cursor, null);
+    const questionId = "11111111-1111-1111-1111-111111111111";
+    panel.detail = { key: panel.selection, questions: [{ id: questionId, question: "Proceed?", answer: null }] };
+    panel.replyInputs[questionId] = { value: () => "Yes" };
+    panel.sendAnswer(questionId, cx); panel.sendAnswer(questionId, cx); await tick();
+    assert.equal(pending.length, 1, "double click must submit once");
+    pending.shift().resolve(response({ id: questionId, question: "Proceed?", answer: "Yes" })); await tasks.at(-1);
+    assert.equal(panel.detail.questions[0].answer, "Yes");
+    assert.equal(panel.sending.size, 0);
     panel.refresh(cx); await tick(); const late = pending.shift();
     panel.deadline = 0; timer(cx); assert.match(panel.error, /timed out/);
     late.resolve(response(page("B"))); await tasks.at(-1);

@@ -30,12 +30,19 @@ function identity(value) {
   return value.name;
 }
 
+export function question(value) {
+  if (!value || typeof value.id !== "string" || !/^[0-9a-f-]{36}$/i.test(value.id) || typeof value.question !== "string" || (value.answer !== null && typeof value.answer !== "string")) throw new Error("Invalid question response.");
+  return { id: value.id, question: value.question, answer: value.answer };
+}
+
 export function issue(value, detail = false) {
   if (!value || typeof value.key !== "string" || !value.key || typeof value.title !== "string" || typeof value.project !== "string" || !statuses.includes(value.status)) throw new Error("Invalid issue response; check planaffe compatibility.");
   if (!Array.isArray(value.labels) || (!detail && value.labels.some(label => typeof label !== "string"))) throw new Error("Invalid issue labels.");
   if (detail && typeof value.description !== "string") throw new Error("Issue detail has no description.");
   return { key: value.key, project: value.project, title: value.title, status: value.status,
     assignee: identity(value.assignee), holder: value.claim === null ? null : identity(value.claim?.holder),
+    open_questions: Number.isInteger(value.open_questions) && value.open_questions >= 0 ? value.open_questions : 0,
+    questions: detail && Array.isArray(value.questions) ? value.questions.map(question) : [],
     labels: value.labels, description: detail ? value.description : null,
     result: detail && typeof value.result === "string" ? value.result : null };
 }
@@ -60,11 +67,11 @@ export function inRepository(row, repo, labels) {
 
 export function filtered(rows, query, status) {
   const q = query.toLowerCase().trim();
-  return rows.filter(row => (status === "all" || (status === "active" ? !["done", "canceled"].includes(row.status) : row.status === status)) && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""}`.toLowerCase().includes(q)).sort((a, b) => ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(a.status) - ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(b.status));
+  return rows.filter(row => (status === "all" || (status === "questions" ? row.open_questions > 0 : false) || (status === "active" ? !["done", "canceled"].includes(row.status) : row.status === status)) && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""}`.toLowerCase().includes(q)).sort((a, b) => ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(a.status) - ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(b.status));
 }
 
 export const demoIssues = [
-  { key: "PLAN-101", project: "PLAN", title: "Connect the project repository", status: "in_progress", assignee: "maintainer", holder: "build-agent", labels: [], description: "A repository points to one project. A project may span several repositories.", result: null },
+  { key: "PLAN-101", project: "PLAN", title: "Connect the project repository", open_questions: 1, questions: [{ id: "11111111-1111-1111-1111-111111111111", question: "Should shared issues be included?", answer: null }], status: "in_progress", assignee: "maintainer", holder: "build-agent", labels: [], description: "A repository points to one project. A project may span several repositories.", result: null },
   { key: "PLAN-102", project: "PLAN", title: "Review issue details", status: "review", assignee: null, holder: null, labels: [], description: "Descriptions and results are Markdown, shown here as source text.", result: "The implementation is ready for human review." },
   { key: "PLAN-103", project: "PLAN", title: "Verify refresh and filters", status: "done", assignee: "maintainer", holder: null, labels: [], description: "Search the loaded issues by key, title, assignee or claim holder.", result: "Verified." }
 ];

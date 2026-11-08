@@ -1,6 +1,6 @@
 # herdr-planaffe
 
-A native, read-only [planaffe](https://github.com/datavisionzero/planaffe) issue panel for [Herdr](https://github.com/herdrdev/herdr-app). MIT licensed. No webview, npm dependencies, adapter service or build step.
+A native [planaffe](https://github.com/datavisionzero/planaffe) issue panel for [Herdr](https://github.com/herdrdev/herdr-app). MIT licensed. No webview, npm dependencies, adapter service or build step.
 
 **Early integration:** tested against planaffe commit `8280064a515499f00594e706cfdc3c299b81ea00` and Herdr's installed gpui-shell 0.7.1 interfaces. See [VERIFICATION.md](VERIFICATION.md) for the checks and their limits. Compatibility with other versions is not yet guaranteed.
 
@@ -57,7 +57,7 @@ Create `planaffe.local.json` in Herdr's home, **outside the repository**:
 }
 ```
 
-Use a user token for a human's panel. A valid agent token also works within that identity's project access. The panel makes only GET requests; the token itself is not necessarily read-only. Tokens are stored in this local plaintext file, not an OS keychain. This version does not read `pa login` credentials or shell token variables.
+Use a user token for a human's panel. A valid agent token also works within that identity's project access. The panel reads issues and can submit an explicit answer to an open question; the token itself is not necessarily read-only. Tokens are stored in this local plaintext file, not an OS keychain. This version does not read `pa login` credentials or shell token variables.
 
 The URL is an origin, without a path, query or embedded credentials. HTTPS is required except for loopback development servers. Use the final trusted instance address without redirects; the Herdr fetch API does not expose a redirect policy. Never send a token intended for one instance to another service.
 
@@ -73,13 +73,14 @@ Repository files cannot choose an endpoint or token. Optional `folder` in pane p
 
 - Defaults to active work, hiding done and canceled issues. In-progress issues appear first, followed by review, todo and backlog. Colored status symbols and clickable overview counts summarize loaded repository issues. All statuses remain accessible through filters.
 - The compact header shows outstanding work, or a green check only after all pages have loaded successfully and no active issues remain. Search does not affect this indicator. Review is orange; error messages remain red.
-- Lists issue key, title, canonical status, assignee and current claim holder.
+- Lists issue key, title, canonical status, open-question count and current claim holder. A non-empty assignee appears in the details.
+- **Needs answer** filters loaded issues with open questions. Select an issue to read its questions and type an answer, then click **Send answer**. Answers use the configured identity and its permissions. Pending submissions cannot be sent twice; there is no automatic retry. If confirmation fails, reload the issue to check the saved state before retrying. Drafts stay in memory and are cleared when selecting an issue or reloading the panel. Demo mode never sends.
 - Loads 100 project issues per page. **Load more** follows the opaque cursor; the counter distinguishes loaded project issues from visible matches.
 - Search and status filters apply to **loaded issues only**. Search matches key, title, assignee and claim holder. With a repository filter, an early page may contain no visible matches; load more to continue.
 - Selecting an issue fetches its full description and result. Markdown is displayed as source text; no rendered Markdown or HTML.
 - Refresh reloads the mapping, local profile and first page. Repository changes hide old content immediately and reload within one second. Late list/detail responses cannot replace the current selection or repository.
 - After 30 seconds a stalled operation can be retried. Its late response is ignored; the underlying native fetch cannot be canceled through the supported host API.
-- Issue content and tokens are not written to mod state, logs or caches. There are no write actions, automatic issue polling, notifications or agent execution.
+- Issue content and tokens are not written to mod state, logs or caches. The only write action is an explicit answer to a question. There is no automatic issue polling, notification delivery or agent execution.
 
 ## Architecture
 
@@ -87,6 +88,7 @@ Repository files cannot choose an endpoint or token. Optional `folder` in pane p
 
 - `GET /issues?project=KEY&limit=100&sort=created&order=asc[&cursor=...]`
 - `GET /issues/{key}` on selection
+- `POST /questions/{id}/answer` only on explicit submission
 - `GET /projects/{key}/labels` when a repository filter is configured
 
 planaffe remains independent of Herdr. This external client uses its public API, not backend internals. The runtime decoder is deliberately handwritten to keep the mod installable without a build; the contract check verifies its consumed fields against a pinned upstream OpenAPI document. This differs from planaffe's generated in-repository clients (ADR 0005). Upgrade the pinned contract and validate the live integration together.

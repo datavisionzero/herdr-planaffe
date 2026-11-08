@@ -65,3 +65,11 @@ test("all-clear requires complete successful data and ignores search filters", a
   }
   assert.equal(workOverview(demoIssues, { ...state, cursor: "next" }).text, "◉ 2+ open");
 });
+
+test("question filtering uses open questions rather than issue status", () => {
+  const rows = [
+    { ...demoIssues[0], status: "todo", open_questions: 2 },
+    { ...demoIssues[1], status: "review", open_questions: 0 }
+  ];
+  assert.deepEqual(filtered(rows, "", "questions"), [rows[0]]);
+});

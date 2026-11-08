@@ -53,3 +53,21 @@ test("wrong project, wrong detail and repeated cursor are refused", async () => 
   body = { ...row, description: "text" };
   await assert.rejects(client.detail("PLAN-2", "PLAN"), /selected issue/);
 });
+
+test("answers use the dedicated endpoint once and validate the response", async () => {
+  const id = "11111111-1111-1111-1111-111111111111";
+  const calls = [];
+  const client = new Client({ url: "https://example.test", token: "test-only" }, async (url, options) => {
+    calls.push({ url, options });
+    return { ok: true, json: async () => ({ id, question: "Which option?", answer: "Option A" }) };
+  });
+  await assert.rejects(client.answer(id, "  "));
+  assert.equal(calls.length, 0);
+  assert.equal((await client.answer(id, " Option A ")).answer, "Option A");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, `https://example.test/questions/${id}/answer`);
+  assert.equal(calls[0].options.method, "POST");
+  assert.deepEqual(JSON.parse(calls[0].options.body), { answer: "Option A" });
+  client.fetcher = async () => ({ ok: false, status: 422 });
+  await assert.rejects(client.answer(id, "Duplicate"), /HTTP 422/);
+});

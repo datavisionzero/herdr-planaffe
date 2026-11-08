@@ -21,9 +21,9 @@ assert.deepEqual(schemas.IssueStatus.enum, statuses);
 assert.equal(schemas.IssuePage.properties.items.items.$ref, "#/components/schemas/IssueSummary");
 for (const [name, fields] of Object.entries({
   IssuePage: ["items", "total", "has_more", "next_cursor"],
-  IssueSummary: ["key", "project", "title", "status", "assignee", "claim", "labels"],
-  Issue: ["key", "project", "title", "status", "assignee", "claim", "labels", "description", "result"],
-  IdentityRef: ["name"], Claim: ["holder"], Label: ["name", "group"]
+  IssueSummary: ["key", "project", "title", "status", "assignee", "claim", "labels", "open_questions"],
+  Issue: ["key", "project", "title", "status", "assignee", "claim", "labels", "description", "result", "questions"],
+  Question: ["id", "question", "answer"], AnswerRequest: ["answer"], IdentityRef: ["name"], Claim: ["holder"], Label: ["name", "group"]
 })) for (const field of fields) assert.ok(schemas[name].required.includes(field), `${name}.${field} must be present`);
 assert.equal(schemas.IssueSummary.properties.labels.items.type, "string");
 assert.equal(schemas.Issue.properties.labels.items.$ref, "#/components/schemas/Label");
@@ -34,3 +34,5 @@ assert.ok(schemas.IssueSummary.properties.assignee.oneOf.some(value => value.$re
 const parameters = contract.paths["/issues"].get.parameters.map(value => value.name);
 for (const name of ["project", "limit", "sort", "order", "cursor"]) assert.ok(parameters.includes(name));
 console.log(`Consumed API contract verified against ${process.argv[2] ? "the supplied document" : revision}.`);
+
+assert.equal(contract.paths["/questions/{id}/answer"].post.requestBody.content["application/json"].schema.$ref, "#/components/schemas/AnswerRequest");
