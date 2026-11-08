@@ -39,7 +39,14 @@ export function issue(value, detail = false) {
   if (!value || typeof value.key !== "string" || !value.key || typeof value.title !== "string" || typeof value.project !== "string" || !statuses.includes(value.status)) throw new Error("Invalid issue response; check planaffe compatibility.");
   if (!Array.isArray(value.labels) || (!detail && value.labels.some(label => typeof label !== "string"))) throw new Error("Invalid issue labels.");
   if (detail && typeof value.description !== "string") throw new Error("Issue detail has no description.");
+  const epic = value.epic ?? null;
+  if (epic !== null && (detail
+    ? !epic || typeof epic.key !== "string" || !epic.key || typeof epic.title !== "string" || !["open", "closed"].includes(epic.status)
+    : typeof epic !== "string" || !epic)) throw new Error("Invalid issue epic.");
   return { key: value.key, project: value.project, title: value.title, status: value.status,
+    epic: detail ? epic?.key ?? null : epic,
+    epicTitle: detail ? epic?.title ?? null : null,
+    epicStatus: detail ? epic?.status ?? null : null,
     assignee: identity(value.assignee), holder: value.claim === null ? null : identity(value.claim?.holder),
     open_questions: Number.isInteger(value.open_questions) && value.open_questions >= 0 ? value.open_questions : 0,
     questions: detail && Array.isArray(value.questions) ? value.questions.map(question) : [],
@@ -65,14 +72,17 @@ export function inRepository(row, repo, labels) {
   return !repo || row.labels.includes(repo) || !row.labels.some(label => labels.includes(label));
 }
 
-export function filtered(rows, query, status) {
+export function filtered(rows, query, status, epic = "all") {
   const q = query.toLowerCase().trim();
-  return rows.filter(row => (status === "all" || (status === "questions" ? row.open_questions > 0 : false) || (status === "active" ? !["done", "canceled"].includes(row.status) : row.status === status)) && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""}`.toLowerCase().includes(q)).sort((a, b) => ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(a.status) - ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(b.status));
+  return rows.filter(row => (epic === "all" || (epic === "with" ? !!row.epic : epic === "without" ? !row.epic : row.epic === epic))
+    && (status === "all" || (status === "questions" ? row.open_questions > 0 : false) || (status === "active" ? !["done", "canceled"].includes(row.status) : row.status === status))
+    && `${row.key} ${row.title} ${row.assignee || ""} ${row.holder || ""} ${row.epic || ""}`.toLowerCase().includes(q))
+    .sort((a, b) => ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(a.status) - ["in_progress", "review", "todo", "backlog", "done", "canceled"].indexOf(b.status));
 }
 
 export const demoIssues = [
-  { key: "PLAN-101", project: "PLAN", title: "Connect the project repository", open_questions: 1, questions: [{ id: "11111111-1111-1111-1111-111111111111", question: "Should shared issues be included?", answer: null }], status: "in_progress", assignee: "maintainer", holder: "build-agent", labels: [], description: "A repository points to one project. A project may span several repositories.", result: null },
-  { key: "PLAN-102", project: "PLAN", title: "Review issue details", status: "review", assignee: null, holder: null, labels: [], description: "Descriptions and results are Markdown, shown here as source text.", result: "The implementation is ready for human review." },
+  { key: "PLAN-101", project: "PLAN", title: "Connect the project repository", epic: "PLAN-E1", epicTitle: "Repository integration", epicStatus: "open", open_questions: 1, questions: [{ id: "11111111-1111-1111-1111-111111111111", question: "Should shared issues be included?", answer: null }], status: "in_progress", assignee: "maintainer", holder: "build-agent", labels: [], description: "A repository points to one project. A project may span several repositories.", result: null },
+  { key: "PLAN-102", project: "PLAN", title: "Review issue details", epic: "PLAN-E1", epicTitle: "Repository integration", epicStatus: "open", status: "review", assignee: null, holder: null, labels: [], description: "Descriptions and results are Markdown, shown here as source text.", result: "The implementation is ready for human review." },
   { key: "PLAN-103", project: "PLAN", title: "Verify refresh and filters", status: "done", assignee: "maintainer", holder: null, labels: [], description: "Search the loaded issues by key, title, assignee or claim holder.", result: "Verified." }
 ];
 

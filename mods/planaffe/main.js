@@ -43,6 +43,7 @@ export default class Planaffe extends View {
   }
 
   refresh(cx) {
+    this.epicFilter = "all"; this.epicFilterOpen = false;
     this.replyInputs = {}; this.answerError = null;
     const serial = ++this.serial, loc = this.demo ? null : this.location();
     this.context = this.key(); this.detailSerial++; this.rows = []; this.selection = null;
@@ -176,7 +177,9 @@ export default class Planaffe extends View {
 
   render(cx) {
     const t = theme(), current = this.context === this.key();
-    const rows = current ? filtered(this.rows, this.query, this.status) : [];
+    const rows = current ? filtered(this.rows, this.query, this.status, this.epicFilter) : [];
+    const epicKeys = current ? [...new Set(this.rows.map(row => row.epic).filter(Boolean))].sort() : [];
+    const epicLabel = key => ({ all: "All", with: "With epic", without: "Without epic" })[key] || key;
     const symbols = { questions: "?", active: "◉", in_progress: "▶", review: "◇", todo: "○", backlog: "⋯", done: "✓", canceled: "×", all: "≡" };
     const overview = workOverview(this.rows, { current, loading: this.loading, error: this.error, cursor: this.cursor });
     const completeColor = settings().dark ? "#65c58a" : "#237744";
@@ -184,6 +187,7 @@ export default class Planaffe extends View {
     const label = status => symbols[status] + " " + (status === "questions" ? "Needs answer" : status === "active" ? "Active work" : status.replaceAll("_", " "));
     const selected = rows.find(row => row.key === this.selection);
     const detail = selected && this.detail?.key === selected.key ? this.detail : null;
+    const selectedEpic = detail ? detail.epic : selected?.epic;
     const button = (id, label, action, active = false) => div().id(id).px(8).py(5).rounded(4).bg(active ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => action(cx)).child(label);
     return v_flex().id("planaffe-root").size_full().bg(t.surface).text_color(t.foreground).text_size(13).p(12).gap(10).children([
       h_flex().items_center().justify_between().children([div().font_semibold().child(current ? this.project || "planaffe" : "planaffe"), button("refresh", "Refresh", cx => this.refresh(cx))]),
@@ -193,6 +197,10 @@ export default class Planaffe extends View {
           div().id("overview-" + status).p(10).rounded(5).bg(this.status === status ? t.selected : t.raised).text_color(color(status)).hover(s => s.bg(t.hover)).on_click((_e, cx) => { this.status = status; cx.notify(); }).child(label(status) + " · " + (current ? this.rows.filter(row => row.status === status).length : 0)))),
         Input.new(this.input).h(36).px(10).py(7).rounded(5).bg(t.raised).text_color(t.foreground),
         h_flex().gap(4).flex_wrap().children(["active", "questions", ...statuses, "all"].map(status => button(`status-${status}`, label(status), cx => { this.status = status; cx.notify(); }, this.status === status))),
+        button("epic-filter", `Epics: ${epicLabel(this.epicFilter)} ${this.epicFilterOpen ? "▴" : "▾"}`, cx => { this.epicFilterOpen = !this.epicFilterOpen; cx.notify(); }, this.epicFilter !== "all"),
+        ...(this.epicFilterOpen ? [v_flex().id("epic-options").h(120).flex_shrink_0().overflow_y_scrollbar().child(
+          v_flex().flex_shrink_0().gap(4).children(["all", "with", "without", ...epicKeys].map(key =>
+            button(`epic-filter-${key}`, epicLabel(key), cx => { this.epicFilter = key; this.epicFilterOpen = false; cx.notify(); }, this.epicFilter === key))))] : []),
         div().text_color(t.muted).child(!current ? "Switching repository…" : this.loading ? "Loading…" : `${rows.length} shown · ${this.loaded} / ${this.total} project issues loaded`),
         ...(current && this.error ? [div().text_color(t.blocked).child(this.error)] : []),
         ...(!rows.length && current && !this.loading && !this.error ? [div().text_color(t.muted).child(this.cursor ? "No matches loaded. Load more to find further issues." : "No matching issues. Choose another filter or clear search.")] : []),
@@ -200,6 +208,7 @@ export default class Planaffe extends View {
           v_flex().id(`issue-${row.key}`).p(10).gap(4).rounded(5).bg(row.key === this.selection ? t.selected : t.raised).hover(s => s.bg(t.hover)).on_click((_e, cx) => this.select(row.key, cx)).children([
             div().text_color(color(row.status)).text_size(11).child(`${label(row.status)} · ${row.key}`),
             div().font_semibold().child(row.title),
+            ...(row.epic ? [div().text_color(t.accent).font_semibold().child(`◆ Epic · ${row.epic}`)] : []),
             ...(row.open_questions > 0 ? [div().text_color(color("review")).child(`? ${row.open_questions} awaiting answer`)] : []),
             ...(row.holder ? [div().text_color(t.muted).child(`Claim: ${row.holder}`)] : [])
           ]))),
@@ -217,6 +226,8 @@ export default class Planaffe extends View {
         v_flex().id(`detail-scroll-${selected.key}`).flex_1().min_h(0).overflow_y_scrollbar().child(
           v_flex().flex_shrink_0().gap(6).children([
             div().font_semibold().child(selected.title),
+            ...(selectedEpic ? [div().text_color(t.accent).font_semibold().child(
+              `◆ Epic · ${selectedEpic}${detail?.epicTitle ? ` · ${detail.epicTitle} (${detail.epicStatus})` : ""}`)] : []),
             ...(selected.assignee ? [div().text_color(t.muted).child(`Assigned to: ${selected.assignee}`)] : []),
             ...(this.detailError ? [div().text_color(t.blocked).child(this.detailError)] : []),
             ...(this.answerError ? [div().text_color(t.blocked).child(this.answerError)] : []),

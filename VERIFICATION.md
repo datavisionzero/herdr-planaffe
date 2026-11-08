@@ -6,7 +6,7 @@ interfaces. Node v24.11.0, Windows.
 
 ## Completed
 
-- `npm test`: nine tests pass. Covers the real controller with injected host
+- `npm test`: sixteen tests pass. Covers the real controller with injected host
   capabilities, HTTP transport, pagination, canonical fields, repository/shared
   filtering, identity display, malformed replies, denied access, timeouts,
   repository races and selection races.
@@ -24,6 +24,10 @@ interfaces. Node v24.11.0, Windows.
   scrolled through its description to the end of its result, and returned to
   the same list filter with the close action. Details use the available panel
   height and their action header stays visible while scrolling.
+- Epic follow-up: validated nullable summary keys and detail references against
+  the pinned API contract; tests cover malformed references and epic filters
+  combined with status, questions and search. Checked native demo markers,
+  scrollable epic selection and epic title/status in ticket details.
 - Fixed a host integration defect found during that check: pane options come
   from Herdr's `props()`, not the View constructor's initialization argument.
 - Temporary test panel was closed and the disposable database container removed.

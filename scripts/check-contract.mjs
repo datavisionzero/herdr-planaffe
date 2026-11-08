@@ -21,14 +21,18 @@ assert.deepEqual(schemas.IssueStatus.enum, statuses);
 assert.equal(schemas.IssuePage.properties.items.items.$ref, "#/components/schemas/IssueSummary");
 for (const [name, fields] of Object.entries({
   IssuePage: ["items", "total", "has_more", "next_cursor"],
-  IssueSummary: ["key", "project", "title", "status", "assignee", "claim", "labels", "open_questions"],
-  Issue: ["key", "project", "title", "status", "assignee", "claim", "labels", "description", "result", "questions"],
+  IssueSummary: ["key", "project", "title", "status", "assignee", "claim", "labels", "open_questions", "epic"],
+  Issue: ["key", "project", "title", "status", "assignee", "claim", "labels", "description", "result", "questions", "epic"],
+  EpicRef: ["key", "title", "status"],
   Question: ["id", "question", "answer"], AnswerRequest: ["answer"], IdentityRef: ["name"], Claim: ["holder"], Label: ["name", "group"]
 })) for (const field of fields) assert.ok(schemas[name].required.includes(field), `${name}.${field} must be present`);
 assert.equal(schemas.IssueSummary.properties.labels.items.type, "string");
 assert.equal(schemas.Issue.properties.labels.items.$ref, "#/components/schemas/Label");
 assert.equal(schemas.Issue.properties.description.type, "string");
 assert.equal(schemas.IssueSummary.properties.description, undefined);
+assert.deepEqual(schemas.IssueSummary.properties.epic.type, ["null", "string"]);
+assert.ok(schemas.Issue.properties.epic.oneOf.some(value => value.$ref === "#/components/schemas/EpicRef"));
+assert.deepEqual(schemas.EpicStatus.enum, ["open", "closed"]);
 assert.equal(schemas.Claim.properties.holder.$ref, "#/components/schemas/IdentityRef");
 assert.ok(schemas.IssueSummary.properties.assignee.oneOf.some(value => value.$ref === "#/components/schemas/IdentityRef"));
 const parameters = contract.paths["/issues"].get.parameters.map(value => value.name);

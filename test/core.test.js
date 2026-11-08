@@ -73,3 +73,33 @@ test("question filtering uses open questions rather than issue status", () => {
   ];
   assert.deepEqual(filtered(rows, "", "questions"), [rows[0]]);
 });
+
+test("epic references decode list keys and detailed names without treating epics as issues", () => {
+  assert.equal(issue(summary({ epic: "PLAN-E1" })).epic, "PLAN-E1");
+  assert.equal(issue(summary({ epic: null })).epic, null);
+  const detail = issue({ ...summary(), description: "Description", epic: { key: "PLAN-E1", title: "Delivery", status: "closed" } }, true);
+  assert.equal(detail.epic, "PLAN-E1");
+  assert.equal(detail.epicTitle, "Delivery");
+  assert.equal(detail.epicStatus, "closed");
+  for (const epic of [42, "", {}, { key: "PLAN-E1" }]) assert.throws(() => issue(summary({ epic })));
+  for (const epic of ["PLAN-E1", {}, { key: "PLAN-E1", title: "Delivery", status: "done" }]) {
+    assert.throws(() => issue({ ...summary({ epic }), description: "Description" }, true));
+  }
+});
+
+test("epic filtering combines with status, questions and search and includes unassigned issues", () => {
+  const rows = [
+    issue(summary({ key: "PLAN-1", epic: "PLAN-E1", open_questions: 1 })),
+    issue(summary({ key: "PLAN-2", epic: "PLAN-E1", status: "done" })),
+    issue(summary({ key: "PLAN-3", epic: "PLAN-E2" })),
+    issue(summary({ key: "PLAN-4", epic: null }))
+  ];
+  const keys = (query, status, epic) => filtered(rows, query, status, epic).map(row => row.key);
+  assert.deepEqual(keys("", "all", "PLAN-E1"), ["PLAN-1", "PLAN-2"]);
+  assert.deepEqual(keys("", "active", "PLAN-E1"), ["PLAN-1"]);
+  assert.deepEqual(keys("", "questions", "with"), ["PLAN-1"]);
+  assert.deepEqual(keys("plan-e2", "all", "with"), ["PLAN-3"]);
+  assert.deepEqual(keys("", "all", "without"), ["PLAN-4"]);
+  assert.deepEqual(keys("", "all", "PLAN-E9"), []);
+  assert.equal(keys("", "all", "all").length, 4);
+});
