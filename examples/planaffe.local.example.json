@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "default": {
+      "url": "https://planaffe.example",
+      "token": "REPLACE_WITH_YOUR_LOCAL_USER_TOKEN"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+*.local.json
+artifacts/
+secrets/
+scratchpad/
+gpui-kit.d.ts
+herdr.d.ts
+*.error

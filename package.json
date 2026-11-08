@@ -1,0 +1,14 @@
+{
+  "name": "herdr-planaffe",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "description": "Native read-only planaffe issue panel for Herdr",
+  "license": "MIT",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:contract": "node scripts/check-contract.mjs",
+    "check": "herdr-app check mods/planaffe"
+  }
+}
