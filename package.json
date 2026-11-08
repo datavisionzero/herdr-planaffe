@@ -5,10 +5,12 @@
   "type": "module",
   "description": "Native read-only planaffe issue panel for Herdr",
   "license": "MIT",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "node --test test/*.test.js",
     "test:contract": "node scripts/check-contract.mjs",
-    "check": "herdr-app check mods/planaffe"
+    "check": "herdr-app check mods/planaffe && herdr-app check mods/planaffe-launcher"
   }
 }
