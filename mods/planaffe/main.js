@@ -132,6 +132,22 @@ export default class Planaffe extends View {
     });
   }
 
+  closeDetails(cx) {
+    this.detailSerial++;
+    this.selection = null; this.detail = null; this.detailLoading = false;
+    this.detailError = null; this.answerError = null; this.replyInputs = {};
+    cx.notify();
+  }
+
+  openIssue(cx) {
+    if (this.demo || this.context !== this.key() || !this.client) return;
+    const row = this.rows.find(row => row.key === this.selection);
+    if (!row || !row.key.startsWith(row.project + "-")) return;
+    const number = row.key.slice(row.project.length + 1);
+    if (!/^[0-9]+$/.test(number)) return;
+    cx.open_url(this.client.profile.url + "/" + encodeURIComponent(row.project) + "/issues/" + number);
+  }
+
   prepareAnswers() {
     for (const q of this.detail?.questions || []) {
       if (q.answer === null) this.replyInputs[q.id] = InputState.new({ placeholder: "Your answer" });
@@ -188,7 +204,14 @@ export default class Planaffe extends View {
         ]))),
       ...(current && this.cursor ? [button("more", this.loading ? "Loading…" : "Load more", cx => this.more(cx))] : []),
       ...(selected ? [v_flex().id("details").max_h(250).overflow_y_scrollbar().p(10).gap(6).bg(t.raised).rounded(5).children([
-        div().font_semibold().child(`${selected.key} · ${selected.title}`),
+        h_flex().items_center().justify_between().gap(8).children([
+          div().font_semibold().child(selected.key),
+          h_flex().items_center().gap(6).children([
+            ...(!this.demo && this.client ? [button("open-issue-web", "↗ Open in planaffe", cx => this.openIssue(cx))] : []),
+            button("close-details", "×", cx => this.closeDetails(cx))
+          ])
+        ]),
+        div().font_semibold().child(selected.title),
         ...(selected.assignee ? [div().text_color(t.muted).child(`Assigned to: ${selected.assignee}`)] : []),
         ...(this.detailError ? [div().text_color(t.blocked).child(this.detailError)] : []),
         ...(this.answerError ? [div().text_color(t.blocked).child(this.answerError)] : []),
